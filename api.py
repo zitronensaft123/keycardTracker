@@ -37,5 +37,4 @@ def getTherapistPrice(item):
         if trader["trader"]["name"] == "Therapist":
             return (trader["price"])
 
-sigma = getItemData()
-print(getTherapistPrice((sigma["Physical Bitcoin"])))
+
