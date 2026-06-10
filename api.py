@@ -1,47 +1,41 @@
 import requests
 
-def queryBase(query):
-    headers = {"Content-Type": "application/json"}
-    response = requests.post('https://api.tarkov.dev/graphql', headers=headers, json={'query': query})
-    if response.status_code == 200:
-        return response.json()
-    else:
-        raise Exception("Query failed to run by returning code of {}. {}".format(response.status_code, query))
+def getItemData():
 
-
-def queryItem(item):
     query = """
-    {
-        itemsByName(name: \"""" + item + """\") {
+        query {
+        items {
             id
             name
             avg24hPrice
             traderPrices {
-                trader { name }
-                price
+            trader {
+                name
+            }
+            price
             }
         }
-    }
+        }
     """
-    getData(queryBase(query))
 
-def getData(data):
-    # item id:
-    itemID = data['data']['itemsByName'][0]['id']
-
-    # name:
-    name = data['data']['itemsByName'][0]['name']
-
-    # price:
-    price = 0
-    
-    traderPrice = (next(bit['price'] for bit in data['data']['itemsByName'][0]['traderPrices'] if bit['trader']['name'] == 'Therapist')) # brilliant oneliner
-    fleaPrice = data['data']['itemsByName'][0]['avg24hPrice']
-    if fleaPrice == None:
-        price = traderPrice
-    elif traderPrice > fleaPrice:
-        price = traderPrice
+    headers = {"Content-Type": "application/json"}
+    response = requests.post('https://api.tarkov.dev/graphql', headers=headers, json={'query': query})
+    if response.status_code == 200:
+        items = response.json()["data"]["items"]
     else:
-        price = fleaPrice
+        raise Exception("Query failed to run by returning code of {}. {}".format(response.status_code, query))
 
-queryItem("Physical Bitcoin")
+    items_by_name = {
+        item["name"]: item
+        for item in items
+    }
+
+    return items_by_name
+    
+def getTherapistPrice(item):
+    for trader in item["traderPrices"]:
+        if trader["trader"]["name"] == "Therapist":
+            return (trader["price"])
+
+sigma = getItemData()
+print(getTherapistPrice((sigma["Physical Bitcoin"])))
