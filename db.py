@@ -8,7 +8,7 @@ def initDB():
 
     cursor.execute('''
                    CREATE TABLE IF NOT EXISTS items (
-                   itemID INTEGER PRIMARY KEY NOT NULL,
+                   itemID TEXT PRIMARY KEY,
                    name TEXT NOT NULL,
                    price INTEGER)
                    ''')
