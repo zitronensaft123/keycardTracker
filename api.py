@@ -32,9 +32,5 @@ def getItemData():
 
     return items_by_name
     
-def getTherapistPrice(item):
-    for trader in item["traderPrices"]:
-        if trader["trader"]["name"] == "Therapist":
-            return (trader["price"])
-
+items = getItemData()
 
