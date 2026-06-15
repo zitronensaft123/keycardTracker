@@ -1,20 +1,23 @@
 import requests
+import datetime
+from datetime import timedelta
 
+# call tarkov.dev for item info
 def getItemData():
 
     query = """
         query {
-        items {
-            id
-            name
-            avg24hPrice
-            traderPrices {
-            trader {
+            items {
+                id
                 name
+                avg24hPrice
+                traderPrices {
+                    trader {
+                        name
+                    }
+                    price
+                }
             }
-            price
-            }
-        }
         }
     """
 
@@ -25,12 +28,13 @@ def getItemData():
     else:
         raise Exception("Query failed to run by returning code of {}. {}".format(response.status_code, query))
 
+    # create lookup dic
     items_by_name = {
         item["name"]: item
         for item in items
     }
 
     return items_by_name
-    
-items = getItemData()
+
+
 
