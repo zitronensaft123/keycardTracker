@@ -48,7 +48,7 @@ def printDashboard():
 
     midPanel.add_row(
         Panel(str(stats["itemsFound"]), title="Items"),
-        Panel("", title="Statistics")
+        Panel("Money Earned: " + f"{stats['moneyEarned']:,}".replace(",", "."), title="Statistics")
     )
 
     bottomPanel = createPanel(2)
@@ -72,13 +72,17 @@ def printDashboard():
 def printPrompt():
 
     selection = Prompt.ask("Enter new Raid?", choices=["Y", "n"], default="Y")
+    console.print()
 
     foundItems = {}
 
     if selection == "Y":
         length = Prompt.ask("How long was ur raid? (write as min:sec)")
+        console.print()
 
         cost = Prompt.ask("What did the Blackcard approximately cost? (Full Price)", default="4500000")
+        console.print()
+
 
         for item in promptItems:
             foundItems[item] = printItemPrompt(item)
@@ -89,15 +93,16 @@ def printPrompt():
 
     # !TODO: make a function that adds keycars to the found items
     card = Prompt.ask("Found any Keycard? (UNFINISHED, wont do anything)", choices=["None","Black", "Blue", "Green", "Violet", "Red"], default="None")
+    console.print()
 
-    console.print("----------- DONE -----------")
+    console.print("----------- added (⊃‿⊂) -----------")
     time.sleep(1)
     console.clear()
     db.addNewRaid(length, foundItems, cost)
 
 def printItemPrompt(itemname):
     quantity = Prompt.ask("How many " + itemname + " did u find?", default="0")
-
+    console.print()
     return quantity
 
 def main():
@@ -105,5 +110,5 @@ def main():
     while(True):
         printDashboard()
         printPrompt()
-        db.conn.commit()
+        db.conn.commit
 main()

@@ -94,7 +94,13 @@ def getRaidTime(raidTime):
     minutes, seconds = raidTime.split(":")
 
     return (int(minutes) * 60) + int(seconds)
-    
+
+# DB helper to turn weird ass data structures to a number
+def tupleToInt(query):
+    cursor.execute(query)
+    tmp = cursor.fetchone()
+    return tmp if tmp[0] else 0
+
 # ===============
 #       API
 # ==============
@@ -117,22 +123,6 @@ def api_getHighestPrice(item):
         return fleaPrice
     else:
         return therapistPrice
-    
-# update the prices inside the DB
-def updatePrices():
-    if getPassedTime() == 0:
-        return
-    
-    # call api 
-    items = api.getItemData()
-
-    # cycle trough the item list
-    for name in trackedITEMS:
-        item = items[name]
-
-        # insert into db
-        cursor.execute("INSERT INTO items (itemID, name, price) VALUES (?, ?, ?) ON CONFLICT(itemID) DO UPDATE SET price = excluded.price, name = excluded.name", (item["id"], item["name"], api_getHighestPrice(item)))
-        conn.commit()
 
 # difference between 2 timestamps
 def getTimeDelta(t1, t2):
@@ -157,7 +147,7 @@ def getPassedTime():
 #      MAIN
 # ==============
 
-# add a new raid entry to the database
+# add a new raid entry to the database (DB)
 def addNewRaid(raidTime, foundItems, cost):
     # add raid stats
     cursor.execute("INSERT INTO raids (date, seconds, cost) VALUES (?, ?, ?)", (datetime.now(), getRaidTime(raidTime), (int(cost) / 5)))
@@ -174,11 +164,21 @@ def addNewRaid(raidTime, foundItems, cost):
         quantity = foundItems[item]
         cursor.execute("INSERT INTO foundItems (raidID, itemID, quantity) VALUES (?, ?, ?)", (currentRaid, itemID, quantity))
 
-# DB helper to turn weird ass data structures to a number
-def tupleToInt(query):
-    cursor.execute(query)
-    tmp = cursor.fetchone()
-    return tmp if tmp[0] else 0
+# update the prices inside the DB (API)
+def updatePrices():
+    if getPassedTime() == 0:
+        return
+    
+    # call api 
+    items = api.getItemData()
+
+    # cycle trough the item list
+    for name in trackedITEMS:
+        item = items[name]
+
+        # insert into db
+        cursor.execute("INSERT INTO items (itemID, name, price) VALUES (?, ?, ?) ON CONFLICT(itemID) DO UPDATE SET price = excluded.price, name = excluded.name", (item["id"], item["name"], api_getHighestPrice(item)))
+        conn.commit()
 
 # get all the different statistics from the database
 def getStats():
