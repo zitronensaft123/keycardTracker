@@ -6,20 +6,25 @@ from datetime import timedelta
 def getItemData():
 
     query = """
-        query {
-            items {
-                id
-                name
-                avg24hPrice
-                traderPrices {
-                    trader {
-                        name
-                    }
-                    price
+    query {
+        items(gameMode: pve) {
+            id
+            name
+            avg24hPrice
+            traderPrices {
+                trader {
+                    name
+                }
+                price
+            }
+            properties {
+                ... on ItemPropertiesKey {
+                    uses
                 }
             }
         }
-    """
+    }
+"""
 
     headers = {"Content-Type": "application/json"}
     response = requests.post('https://api.tarkov.dev/graphql', headers=headers, json={'query': query})

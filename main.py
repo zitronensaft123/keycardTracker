@@ -14,6 +14,9 @@ import time
 
 import db
 
+db.initDB()
+db.updatePrices()
+
 promptItems = [
     "Physical Bitcoin",
     "Roler Submariner gold wrist watch"
@@ -44,7 +47,7 @@ def printDashboard():
     midPanel = createPanel(1)
 
     midPanel.add_row(
-        Panel(stats["itemsFound"], title="Items"),
+        Panel(str(stats["itemsFound"]), title="Items"),
         Panel("", title="Statistics")
     )
 
@@ -90,7 +93,7 @@ def printPrompt():
     console.print("----------- DONE -----------")
     time.sleep(1)
     console.clear()
-    return length, cost, foundItems
+    db.addNewRaid(length, foundItems, cost)
 
 def printItemPrompt(itemname):
     quantity = Prompt.ask("How many " + itemname + " did u find?", default="0")
@@ -102,4 +105,5 @@ def main():
     while(True):
         printDashboard()
         printPrompt()
+        db.conn.commit()
 main()
