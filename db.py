@@ -15,6 +15,12 @@ trackedITEMS = [
     "Intelligence folder",
     "Roler Submariner gold wrist watch",
     "Cardinal apartment key"
+    "TerraGroup Labs keycard (Blue)"
+    "TerraGroup Labs keycard (Green)"
+    "TerraGroup Labs keycard (Violet)"
+    "TerraGroup Labs keycard (Yellow)"
+    "TerraGroup Labs keycard (Black)"
+    "TerraGroup Labs keycard (Red)"
 ]
  
 # initialize db (create tables)
@@ -135,21 +141,27 @@ def addNewRaid(raidTime, foundItems, cost):
     currentRaid = cursor.lastrowid()
     # foundItems is a dict that has the item name and the number of times i found it as key:value pair
     for item in foundItems:
-        itemID = item["id"]
+        cursor.execute("SELECT itemID FROM items WHERE name = ?"), (item)
+        itemID = cursor.fetchone()
+        
         quantity = foundItems[item]
         cursor.execute("INSERT INTO foundItems (raidID, itemID, quantity) VALUES (?, ?, ?)"), (currentRaid, itemID, quantity)
 
 # query SQL database for the Price
 def getItemPrice(item):
     cursor.execute("SELECT price FROM items WHERE name = ?", (item))
-    return cursor.fetchall()
+    price = cursor.fetchone()
+
+    return price[0] if price and price[0] is not None else 0
 
 # get all the raw money i made
 def getMoneyEarned(rows):
-
     money = 0
-    for name in rows:
-        money += (getItemPrice(name) * rows[name][1])
+
+    for name, quantity in rows:
+        price = getItemPrice(name)
+
+        money += (price * quantity)
 
     return money
 
@@ -166,7 +178,8 @@ def getStats():
 
     # find out how many raids are entried
     cursor.execute("SELECT COUNT(raidID) AS count FROM raids")
-    stats["raidCounter"] = cursor.fetchall()
+    raids = cursor.fetchone()
+    stats["raidCounter"] = raids if raids[0] else 0
 
     # get all items found + quantity inside a 2d array
     cursor.execute("SELECT items.name AS itemName, foundItems.quantity AS quantity FROM foundItems INNER JOIN items ON items.itemID = foundItems.itemID WHERE foundItems.quantity != 0")
@@ -174,11 +187,19 @@ def getStats():
     allItems = cursor.fetchall()
     stats["moneyEarned"] = getMoneyEarned(allItems)
 
+    items = {}
+
+    for name, quantity in allItems:
+        if name in items:
+            items[name] += quantity
+        else:
+            items[name] = quantity
+    
+    stats["itemsFound"] = items
+
     cursor.execute("SELECT SUM(cost) FROM raids")
-
-    moneySpent = cursor.fetchall()
-
-    stats["itemsFound"] = allItems
+    cost = cursor.fetchone()
+    stats["moneySpent"] = cost if cost[0] else 0
 
     stats["revenue"] = stats["moneyEarned"] - stats["moneySpent"]
 
