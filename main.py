@@ -30,11 +30,19 @@ aliases = {
 
 console = Console()
 
+def getGoalValue():
+    with open("goal.txt") as f:
+        return int(f.read())
+    
+def setGoalValue(goal):
+    with open("goal.txt", "w") as f:
+        f.write(goal)
+
 def createProgressBar(current, goal):
     progress = Progress(
         TextColumn(formatNumber(db.getNetWorth())),
         BarColumn(bar_width=70, complete_style="green", finished_style="bold green"),
-        TextColumn(formatNumber(500000000))
+        TextColumn(formatNumber(getGoalValue()))
     )
 
     taskID = progress.add_task("tracking", total=goal)
@@ -66,9 +74,9 @@ def printDashboard():
     itemRows = []
 
     for fullName, quantity in stats["itemsFound"].items():
-        displayName = aliases.get(fullName, fullName)
-
-        itemRows.append(f"* {displayName:<10} x{quantity}")
+        if fullName == "Physical Bitcoin" or "Roler Submariner gold wrist watch":
+            displayName = aliases.get(fullName, fullName)
+            itemRows.append(f"* {displayName:<10} x{quantity}")
 
     itemPanelContent = "\n".join(itemRows)
 
@@ -86,7 +94,7 @@ def printDashboard():
             title="Statistics"
     ))
 
-    bottomPanel = Panel(createProgressBar(db.getNetWorth(), 500000000), title="Goal")
+    bottomPanel = Panel(createProgressBar(db.getNetWorth(), getGoalValue()), title="Goal")
 
     contents = Group(
         topPanel,
@@ -117,6 +125,13 @@ def printPrompt():
         for item in promptItems:
             foundItems[item] = printItemPrompt(item)
 
+        foundItems["Cardinal apartment key"] = 1
+        foundItems["Intelligence folder"] = 1
+
+        # !TODO: make a function that adds keycars to the found items
+        card = Prompt.ask("Found any Keycard? (UNFINISHED, wont do anything)", choices=["None","Black", "Blue", "Green", "Violet", "Red", "Yellow"], default="None")
+        console.print()
+
     elif selection == "u":
         money = Prompt.ask("How much RUB do u currently possess?")
         db.addNetWorthEntry(money)
@@ -131,16 +146,14 @@ def printPrompt():
         settingSelection = Prompt.ask("c: Change goal", choices=["c"])
         if settingSelection == "c":
             newGoal = Prompt.ask("What do u want to change the goal to?")
+            setGoalValue(newGoal)
         print("\n Done")
         return
     else:
         console.print("bye")
         exit()
-
-    # !TODO: make a function that adds keycars to the found items
-    card = Prompt.ask("Found any Keycard? (UNFINISHED, wont do anything)", choices=["None","Black", "Blue", "Green", "Violet", "Red"], default="None")
-    console.print()
-
+    # DEBUG    
+    console.print(foundItems)
     console.print("----------- added (⊃‿⊂) -----------")
     time.sleep(1)
     console.clear()

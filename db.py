@@ -166,6 +166,7 @@ def getPassedTime():
 # add a new raid entry to the database (DB)
 def addNewRaid(raidTime, foundItems, cost):
     # add raid stats
+    cost = int(cost.replace(".", ""))
     cursor.execute("INSERT INTO raids (date, seconds, cost) VALUES (?, ?, ?)", (datetime.now(), getRaidTime(raidTime), (int(cost) / 5)))
     
     currentRaid = cursor.lastrowid
