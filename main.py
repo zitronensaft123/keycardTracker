@@ -1,5 +1,6 @@
-from datetime import datetime
+# !TODO: fix dashboard panels to be the right size, currently only works if i dont find any other item than BTC, Roler, BlackCard
 
+from datetime import datetime
 from rich import box
 from rich.prompt import Prompt
 from rich.align import Align
@@ -80,8 +81,9 @@ def printDashboard():
     itemRows = []
 
     for fullName, quantity in stats["itemsFound"].items():
-        displayName = aliases.get(fullName, fullName)
-        itemRows.append(f"* {displayName:<10} x{quantity}")
+        if fullName == "Physical Bitcoin" or fullName == "Roler Submariner gold wrist watch" or fullName == "TerraGroup Labs keycard (Black)":
+            displayName = aliases.get(fullName, fullName)
+            itemRows.append(f"* {displayName:<10} x{quantity}")
 
     itemPanelContent = "\n".join(itemRows)
 
@@ -91,7 +93,7 @@ def printDashboard():
     midPanel = createPanel(1)
 
     midPanel.add_row(
-        Panel(itemPanelContent + "\n", title="Items"),
+        Panel(itemPanelContent, title="Items"),
         Panel(
             f"{'Money Earned:':<15} {formatNumber(stats['moneyEarned'])} ₽\n"
             f"{'Money Spent:':<15} {formatNumber(stats['moneySpent'])} ₽\n"
@@ -120,7 +122,7 @@ def printPrompt():
     foundItems = {}
 
     if selection == "r":
-        length = Prompt.ask("How long was ur raid? (write as min:sec)", default="10:00")
+        length = Prompt.ask("How long was ur raid? (write as min:sec)", default="15:00")
         console.print()
 
         cost = Prompt.ask("What did the Blackcard approximately cost? (Full Price)", default=formatNumber(4500000))
@@ -130,11 +132,6 @@ def printPrompt():
         for item in promptItems:
             foundItems[item] = printItemPrompt(item)
 
-        # add 100% Spawns
-        #foundItems["Cardinal apartment key"] = 1
-        #foundItems["Intelligence folder"] = 1
-
-        # !TODO: make a function that adds keycars to the found items
         card = Prompt.ask("Found any Keycards?", choices=["None","Black", "Blue", "Green", "Violet", "Red", "Yellow"], default="None")
         if card != "None":
             foundItems[db.getKeycardName(card)] = 1
