@@ -67,8 +67,23 @@ def initDB():
                     cost INTEGER NOT NULL,
                     swipes INTEGER 
                     )
-    ''')
+                    ''')
+    cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS netWorth (
+                    entryID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    money INTEGER NOT NULL,
+                    date TEXT NOT NULL
+                    )
+                    ''')
     conn.commit()
+
+def addNetWorthEntry(money):
+    cursor.execute("INSERT INTO netWorth (money, date) VALUES (?, ?)", (money, datetime.now()))
+    conn.commit()
+
+def getNetWorth():
+    result = tupleToInt("SELECT money FROM netWorth ORDER BY entryID DESC LIMIT 1")
+    return result
 
 # query SQL database for the Price
 def getItemPrice(item):
@@ -99,7 +114,7 @@ def getRaidTime(raidTime):
 def tupleToInt(query):
     cursor.execute(query)
     tmp = cursor.fetchone()
-    return tmp if tmp[0] else 0
+    return tmp[0] if tmp is not None else 0
 
 # ===============
 #       API
@@ -140,6 +155,7 @@ def getPassedTime():
         with open("timedelta.txt", "w") as f:    
             f.write(datetime.now().isoformat())
         return 1
+        print("Please wait.... Updating Prices")
     else:
         return 0
 
