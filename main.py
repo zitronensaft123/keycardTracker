@@ -17,7 +17,7 @@ import time
 import db
 
 db.initDB()
-db.updatePrices()
+db.updatePrices(0)
 
 promptItems = [
     "Physical Bitcoin",
@@ -116,7 +116,7 @@ def printDashboard():
 
 def printPrompt():
 
-    selection = Prompt.ask("Select option: (h to list avaiable commands)", choices=["r", "u", "h", "s", "e"], default="r")
+    selection = Prompt.ask("Select option: (h to list avaiable commands)", choices=["r", "u", "h", "d", "e"], default="r")
     console.print()
 
     foundItems = {}
@@ -145,17 +145,22 @@ def printPrompt():
     
     # help menu (print commands)
     elif selection == "h":
-        console.print(" r: Add new Raid entry \n u: Update current Net Worth \n s: Settings \n e: Exit \n")
+        console.print(" r: Add new Raid entry \n u: Update current Net Worth \n d: Dev Options \n e: Exit \n")
         print("Press any key to continue")
         click.getchar()
         return
     
     # some settings currently only changes the goal, maybe gonna add some shit later
-    elif selection == "s":
-        settingSelection = Prompt.ask("c: Change goal", choices=["c"])
+    elif selection == "d":
+        settingSelection = Prompt.ask(" c: Change goal \n f: Fetch Prices via API, !only use if DB is empty, will bypass 10 min timer! \n b: back \n", choices=["c", "f", "b"])
         if settingSelection == "c":
             newGoal = Prompt.ask("What do u want to change the goal to?")
             setGoalValue(newGoal)
+        elif settingSelection == "f":
+            print("Fetching...")
+            db.updatePrices(1)
+        else:
+            return
         print("\n Done")
         return
     else:
@@ -176,9 +181,22 @@ def printItemPrompt(itemname):
     return quantity
 
 def main():
-    console.clear()
-    while(True):
-        printDashboard()
-        printPrompt()
-        db.conn.commit
+    try:
+        console.clear()
+        while(True):
+            printDashboard()
+            printPrompt()
+            db.conn.commit
+    except KeyboardInterrupt:
+        console.clear()
+
+        console.print("User Interrupt detected, exiting...")
+
+        try:
+            db.conn.close()
+        except:
+            pass
+
+        import sys
+        sys.exit(0)
 main()

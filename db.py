@@ -197,20 +197,23 @@ def addNewRaid(raidTime, foundItems, cost):
         conn.commit()
 
 # update the prices inside the DB (API)
-def updatePrices():
-    if getPassedTime() == 0:
-        return
-    
-    # call api 
-    items = api.getItemData()
+def updatePrices(mode):
 
-    # cycle trough the item list
-    for name in trackedITEMS:
-        item = items[name]
+    if mode != 1:
+        if getPassedTime() == 0:
+            return
+    else:
+        # call api 
+        items = api.getItemData()
 
-        # insert into db
-        cursor.execute("INSERT INTO items (itemID, name, price) VALUES (?, ?, ?) ON CONFLICT(itemID) DO UPDATE SET price = excluded.price, name = excluded.name", (item["id"], item["name"], api_getHighestPrice(item)))
-        conn.commit()
+        # cycle trough the item list
+        for name in trackedITEMS:
+            item = items[name]
+
+            # insert into db
+            cursor.execute("INSERT INTO items (itemID, name, price) VALUES (?, ?, ?) ON CONFLICT(itemID) DO UPDATE SET price = excluded.price, name = excluded.name", (item["id"], item["name"], api_getHighestPrice(item)))
+            conn.commit()
+
 
 # get all the different statistics from the database
 def getStats():
