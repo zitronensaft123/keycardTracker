@@ -25,7 +25,13 @@ promptItems = [
 
 aliases = {
     "Physical Bitcoin" : "BTC",
-    "Roler Submariner gold wrist watch" : "Roler"
+    "Roler Submariner gold wrist watch" : "Roler",
+    "TerraGroup Labs keycard (Blue)" : "Keycard (Blue)",
+    "TerraGroup Labs keycard (Green)": "Keycard (Green)",
+    "TerraGroup Labs keycard (Violet)": "Keycard (Violet)",
+    "TerraGroup Labs keycard (Yellow)": "Keycard (Yellow)",
+    "TerraGroup Labs keycard (Black)": "Keycard (Black)",
+    "TerraGroup Labs keycard (Red)": "Keycard (Red)"
 }
 
 console = Console()
@@ -74,9 +80,8 @@ def printDashboard():
     itemRows = []
 
     for fullName, quantity in stats["itemsFound"].items():
-        if fullName == "Physical Bitcoin" or "Roler Submariner gold wrist watch":
-            displayName = aliases.get(fullName, fullName)
-            itemRows.append(f"* {displayName:<10} x{quantity}")
+        displayName = aliases.get(fullName, fullName)
+        itemRows.append(f"* {displayName:<10} x{quantity}")
 
     itemPanelContent = "\n".join(itemRows)
 
@@ -115,7 +120,7 @@ def printPrompt():
     foundItems = {}
 
     if selection == "r":
-        length = Prompt.ask("How long was ur raid? (write as min:sec)")
+        length = Prompt.ask("How long was ur raid? (write as min:sec)", default="10:00")
         console.print()
 
         cost = Prompt.ask("What did the Blackcard approximately cost? (Full Price)", default=formatNumber(4500000))
@@ -125,23 +130,30 @@ def printPrompt():
         for item in promptItems:
             foundItems[item] = printItemPrompt(item)
 
-        foundItems["Cardinal apartment key"] = 1
-        foundItems["Intelligence folder"] = 1
+        # add 100% Spawns
+        #foundItems["Cardinal apartment key"] = 1
+        #foundItems["Intelligence folder"] = 1
 
         # !TODO: make a function that adds keycars to the found items
-        card = Prompt.ask("Found any Keycard? (UNFINISHED, wont do anything)", choices=["None","Black", "Blue", "Green", "Violet", "Red", "Yellow"], default="None")
+        card = Prompt.ask("Found any Keycards?", choices=["None","Black", "Blue", "Green", "Violet", "Red", "Yellow"], default="None")
+        if card != "None":
+            foundItems[db.getKeycardName(card)] = 1
         console.print()
 
+    # update goal
     elif selection == "u":
         money = Prompt.ask("How much RUB do u currently possess?")
         db.addNetWorthEntry(money)
         return
     
+    # help menu (print commands)
     elif selection == "h":
         console.print(" r: Add new Raid entry \n u: Update current Net Worth \n s: Settings \n e: Exit \n")
         print("Press any key to continue")
         click.getchar()
         return
+    
+    # some settings currently only changes the goal, maybe gonna add some shit later
     elif selection == "s":
         settingSelection = Prompt.ask("c: Change goal", choices=["c"])
         if settingSelection == "c":
@@ -152,13 +164,15 @@ def printPrompt():
     else:
         console.print("bye")
         exit()
-    # DEBUG    
-    console.print(foundItems)
+
     console.print("----------- added (⊃‿⊂) -----------")
     time.sleep(1)
     console.clear()
+
+    # entry data to database
     db.addNewRaid(length, foundItems, cost)
 
+# prompt how many items that have been found
 def printItemPrompt(itemname):
     quantity = Prompt.ask("How many " + itemname + " did u find?", default="0")
     console.print()

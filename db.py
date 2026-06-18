@@ -77,6 +77,19 @@ def initDB():
                     ''')
     conn.commit()
 
+def getTotalRaids():
+    if tupleToInt("SELECT MAX(raidID) FROM raids") == None:
+        return 0
+    else:
+        return  tupleToInt("SELECT MAX(raidID) FROM raids")
+
+# calculate the money made with the guaranteed spawns (intel, cardinal)
+def getFixedProfit():
+    return (getItemPrice("Cardinal apartment key") + getItemPrice("Intelligence folder")) * getTotalRaids()
+    
+def getKeycardName(color):
+    return f"TerraGroup Labs keycard ({color})"
+
 def addNetWorthEntry(money):
     cursor.execute("INSERT INTO netWorth (money, date) VALUES (?, ?)", (money, datetime.now()))
     conn.commit()
@@ -168,7 +181,8 @@ def addNewRaid(raidTime, foundItems, cost):
     # add raid stats
     cost = int(cost.replace(".", ""))
     cursor.execute("INSERT INTO raids (date, seconds, cost) VALUES (?, ?, ?)", (datetime.now(), getRaidTime(raidTime), (int(cost) / 5)))
-    
+    conn.commit()
+
     currentRaid = cursor.lastrowid
     # foundItems is a dict that has the item name and the number of times i found it as key:value pair
     for item in foundItems:
@@ -180,6 +194,7 @@ def addNewRaid(raidTime, foundItems, cost):
 
         quantity = foundItems[item]
         cursor.execute("INSERT INTO foundItems (raidID, itemID, quantity) VALUES (?, ?, ?)", (currentRaid, itemID, quantity))
+        conn.commit()
 
 # update the prices inside the DB (API)
 def updatePrices():
@@ -216,7 +231,7 @@ def getStats():
     cursor.execute("SELECT items.name AS itemName, foundItems.quantity AS quantity FROM foundItems INNER JOIN items ON items.itemID = foundItems.itemID WHERE foundItems.quantity != 0")
 
     allItems = cursor.fetchall()
-    stats["moneyEarned"] = getMoneyEarned(allItems)
+    stats["moneyEarned"] = getMoneyEarned(allItems) + getFixedProfit()
 
     items = {}
 
