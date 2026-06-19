@@ -16,6 +16,10 @@ import time
 
 import db
 
+# -----------
+versionName = "V1.0 "
+# -----------
+
 db.initDB()
 db.updatePrices(0)
 
@@ -88,7 +92,7 @@ def printDashboard():
     itemPanelContent = "\n".join(itemRows)
 
     # the header ascii art 
-    topPanel = Panel.fit(art.text2art("KEYCARD TRACKER", font="sky free"), title="BETA ", subtitle="=")
+    topPanel = Panel.fit(art.text2art("KEYCARD TRACKER", font="sky free"), title=versionName, subtitle="=")
 
     midPanel = createPanel(1)
 
