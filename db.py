@@ -58,7 +58,7 @@ def initDB():
                        FOREIGN KEY(itemID) REFERENCES items(itemID)
                        )
                        ''')
-        
+        # useless table for now, gonna leave it maybe make something with it later
         cursor.execute('''
                         CREATE TABLE IF NOT EXISTS blackCard
                         (
@@ -75,16 +75,6 @@ def initDB():
                         )
                         ''')
         conn.commit()
-
-def getTotalRaids():
-    if tupleToInt("SELECT MAX(raidID) FROM raids") == None:
-        return 0
-    else:
-        return  tupleToInt("SELECT MAX(raidID) FROM raids")
-
-# calculate the money made with the guaranteed spawns (intel, cardinal)
-def getFixedProfit():
-    return (getItemPrice("Cardinal apartment key") + getItemPrice("Intelligence folder")) * getTotalRaids()
     
 def getKeycardName(color):
     return f"TerraGroup Labs keycard ({color})"
@@ -94,29 +84,6 @@ def addNetWorthEntry(money):
         cursor = conn.cursor()
         cursor.execute("INSERT INTO netWorth (money, date) VALUES (?, ?)", (money, datetime.now()))
         conn.commit()
-
-def getNetWorth():
-    result = tupleToInt("SELECT money FROM netWorth ORDER BY entryID DESC LIMIT 1")
-    return result
-
-# query SQL database for the Price of passed item
-def getItemPrice(item):
-    with sqlite3.connect(dbNAME) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT price FROM items WHERE name = ?", (item,))
-        price = cursor.fetchone()
-        return price[0] if price and price[0] is not None else 0
-
-# get all the raw money i made
-def getMoneyEarned(rows):
-    money = 0
-
-    for name, quantity in rows:
-        price = getItemPrice(name)
-
-        money += (price * quantity)
-
-    return money
 
 # convert incoming raidTime string to integer Value
 def getRaidTime(raidTime):
@@ -171,21 +138,12 @@ def getPassedTime():
     if(timeSinceLastSave > timedelta(minutes=10)):
         with open("timedelta.txt", "w") as f:    
             f.write(datetime.now().isoformat())
+                
+            print("Please wait.... Updating Prices")
         return 1
-        print("Please wait.... Updating Prices")
     else:
         return 0
 
-# =============
-#     Pandas
-# =============
-
-def getItemStats_df():
-    with sqlite3.connect(dbNAME) as conn:
-        cursor = conn.cursor()
-        query = "SELECT items.name AS itemName, items.cost AS cost, foundItems.quantity AS quantity FROM foundItems INNER JOIN items ON items.itemID = foundItems.itemID WHERE foundItems.quantity != 0"
-        return = pd.read_sql_query(query, conn)
-        
 # ==============
 #      MAIN
 # ==============
@@ -232,45 +190,26 @@ def updatePrices(mode):
             cursor.execute("INSERT INTO items (itemID, name, price) VALUES (?, ?, ?) ON CONFLICT(itemID) DO UPDATE SET price = excluded.price, name = excluded.name", (item["id"], item["name"], api_getHighestPrice(item)))
             conn.commit()
 
+def df_getItems():
+       with sqlite3.connect(dbNAME) as conn:
+        query = """
+            SELECT 
+                foundItems.raidID AS raidID,
+                items.name AS itemName, 
+                items.price AS cost, 
+                foundItems.quantity AS quantity 
+            FROM foundItems 
+            INNER JOIN items ON items.itemID = foundItems.itemID 
+            WHERE foundItems.quantity > 0
+        """
+        return pd.read_sql_query(query, conn)
 
-# get all the different statistics from the database
-def getStats():
-
-    # dictionary for the stats
-    stats = {
-        "raidCounter":  0,
-        "moneyEarned":  0,
-        "moneySpent":   0,
-        "itemsFound":  {},
-        "revenue":  0
-    }
-
-    # find out how many raids are entried
-    stats["raidCounter"] = tupleToInt("SELECT COUNT(raidID) AS count FROM raids")
-
+def df_getRaids():
     with sqlite3.connect(dbNAME) as conn:
-        cursor = conn.cursor()
-        # get all items found + quantity inside a 2d array
-        cursor.execute("SELECT items.name AS itemName, foundItems.quantity AS quantity FROM foundItems INNER JOIN items ON items.itemID = foundItems.itemID WHERE foundItems.quantity != 0")
-
-        allItems = cursor.fetchall()
-        stats["moneyEarned"] = getMoneyEarned(allItems) + getFixedProfit()
-
-        items = {}
-
-        for name, quantity in allItems:
-            if name in items:
-                items[name] += quantity
-            else:
-                items[name] = quantity
-        
-        stats["itemsFound"] = items
-
-        cursor.execute("SELECT SUM(cost) FROM raids")
-        result_spent = cursor.fetchone()
-        stats["moneySpent"] = result_spent[0] if result_spent and result_spent[0] is not None else 0
-
-    # profit calculation
-    stats["revenue"] = stats["moneyEarned"] - stats["moneySpent"]
-
-    return stats
+        query = "SELECT raidID, date, seconds, cost from raids"
+        return pd.read_sql_query(query, conn)
+    
+def df_getNetWorth():
+    with sqlite3.connect(dbNAME) as conn:
+        query = "SELECT money, date from netWorth"
+        return pd.read_sql_query(query, conn)
