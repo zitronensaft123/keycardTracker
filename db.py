@@ -2,6 +2,7 @@ import sqlite3
 import api
 from datetime import datetime
 from datetime import timedelta
+import pandas as pd
 
 dbNAME = "tracker.db"
 price = 900000
@@ -24,58 +25,56 @@ trackedITEMS = [
 #      DB
 # ==============
 
-conn = sqlite3.connect(dbNAME)
-cursor = conn.cursor()
-
 # initialize db (create tables)
 def initDB():
+    with sqlite3.connect(dbNAME) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+                       CREATE TABLE IF NOT EXISTS items
+                       (
+                       itemID TEXT PRIMARY KEY NOT NULL,
+                       name TEXT NOT NULL,
+                       price INTEGER
+                       )
+                       ''')
+        cursor.execute('''
+                       CREATE TABLE IF NOT EXISTS raids
+                       (
+                       raidID INTEGER PRIMARY KEY AUTOINCREMENT,
+                       date TEXT NOT NULL,
+                       seconds INTEGER NOT NULL,
+                       cost INTEGER NOT NULL
+                       )
+                       ''')
+        cursor.execute('''
+                       CREATE TABLE IF NOT EXISTS foundItems
+                       (
+                       raidID  INTEGER NOT NULL,
+                       itemID   TEXT NOT NULL,
+                       quantity INTEGER,
 
-    cursor.execute('''
-                   CREATE TABLE IF NOT EXISTS items
-                   (
-                   itemID TEXT PRIMARY KEY NOT NULL,
-                   name TEXT NOT NULL,
-                   price INTEGER
-                   )
-                   ''')
-    cursor.execute('''
-                   CREATE TABLE IF NOT EXISTS raids
-                   (
-                   raidID INTEGER PRIMARY KEY AUTOINCREMENT,
-                   date TEXT NOT NULL,
-                   seconds INTEGER NOT NULL,
-                   cost INTEGER NOT NULL
-                   )
-                   ''')
-    cursor.execute('''
-                   CREATE TABLE IF NOT EXISTS foundItems
-                   (
-                   raidID  INTEGER NOT NULL,
-                   itemID   TEXT NOT NULL,
-                   quantity INTEGER,
-
-                   PRIMARY KEY(raidID, itemID),
-                   FOREIGN KEY(raidID) REFERENCES raids(raidID),
-                   FOREIGN KEY(itemID) REFERENCES items(itemID)
-                   )
-                   ''')
-    
-    cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS blackCard
-                    (
-                    cardID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    cost INTEGER NOT NULL,
-                    swipes INTEGER 
-                    )
-                    ''')
-    cursor.execute('''
-                    CREATE TABLE IF NOT EXISTS netWorth (
-                    entryID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    money INTEGER NOT NULL,
-                    date TEXT NOT NULL
-                    )
-                    ''')
-    conn.commit()
+                       PRIMARY KEY(raidID, itemID),
+                       FOREIGN KEY(raidID) REFERENCES raids(raidID),
+                       FOREIGN KEY(itemID) REFERENCES items(itemID)
+                       )
+                       ''')
+        
+        cursor.execute('''
+                        CREATE TABLE IF NOT EXISTS blackCard
+                        (
+                        cardID INTEGER PRIMARY KEY AUTOINCREMENT,
+                        cost INTEGER NOT NULL,
+                        swipes INTEGER 
+                        )
+                        ''')
+        cursor.execute('''
+                        CREATE TABLE IF NOT EXISTS netWorth (
+                        entryID INTEGER PRIMARY KEY AUTOINCREMENT,
+                        money INTEGER NOT NULL,
+                        date TEXT NOT NULL
+                        )
+                        ''')
+        conn.commit()
 
 def getTotalRaids():
     if tupleToInt("SELECT MAX(raidID) FROM raids") == None:
@@ -91,19 +90,22 @@ def getKeycardName(color):
     return f"TerraGroup Labs keycard ({color})"
 
 def addNetWorthEntry(money):
-    cursor.execute("INSERT INTO netWorth (money, date) VALUES (?, ?)", (money, datetime.now()))
-    conn.commit()
+    with sqlite3.connect(dbNAME) as conn:
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO netWorth (money, date) VALUES (?, ?)", (money, datetime.now()))
+        conn.commit()
 
 def getNetWorth():
     result = tupleToInt("SELECT money FROM netWorth ORDER BY entryID DESC LIMIT 1")
     return result
 
-# query SQL database for the Price
+# query SQL database for the Price of passed item
 def getItemPrice(item):
-    cursor.execute("SELECT price FROM items WHERE name = ?", (item,))
-    price = cursor.fetchone()
-
-    return price[0] if price and price[0] is not None else 0
+    with sqlite3.connect(dbNAME) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT price FROM items WHERE name = ?", (item,))
+        price = cursor.fetchone()
+        return price[0] if price and price[0] is not None else 0
 
 # get all the raw money i made
 def getMoneyEarned(rows):
@@ -125,9 +127,11 @@ def getRaidTime(raidTime):
 
 # DB helper to turn weird ass data structures to a number
 def tupleToInt(query):
-    cursor.execute(query)
-    tmp = cursor.fetchone()
-    return tmp[0] if tmp is not None else 0
+    with sqlite3.connect(dbNAME) as conn:
+        cursor = conn.cursor()
+        cursor.execute(query)
+        tmp = cursor.fetchone()
+        return tmp[0] if tmp is not None else 0
 
 # ===============
 #       API
@@ -172,6 +176,16 @@ def getPassedTime():
     else:
         return 0
 
+# =============
+#     Pandas
+# =============
+
+def getItemStats_df():
+    with sqlite3.connect(dbNAME) as conn:
+        cursor = conn.cursor()
+        query = "SELECT items.name AS itemName, items.cost AS cost, foundItems.quantity AS quantity FROM foundItems INNER JOIN items ON items.itemID = foundItems.itemID WHERE foundItems.quantity != 0"
+        return = pd.read_sql_query(query, conn)
+        
 # ==============
 #      MAIN
 # ==============
@@ -180,21 +194,23 @@ def getPassedTime():
 def addNewRaid(raidTime, foundItems, cost):
     # add raid stats
     cost = int(cost.replace(".", ""))
-    cursor.execute("INSERT INTO raids (date, seconds, cost) VALUES (?, ?, ?)", (datetime.now(), getRaidTime(raidTime), (int(cost) / 5)))
-    conn.commit()
-
-    currentRaid = cursor.lastrowid
-    # foundItems is a dict that has the item name and the number of times i found it as key:value pair
-    for item in foundItems:
-        cursor.execute("SELECT itemID FROM items WHERE name = ?", (item,))
-        result = cursor.fetchone()
-
-        if result:
-            itemID = result[0]
-
-        quantity = foundItems[item]
-        cursor.execute("INSERT INTO foundItems (raidID, itemID, quantity) VALUES (?, ?, ?)", (currentRaid, itemID, quantity))
+    with sqlite3.connect(dbNAME) as conn:
+        cursor = conn.cursor()
+        cursor.execute("INSERT INTO raids (date, seconds, cost) VALUES (?, ?, ?)", (datetime.now(), getRaidTime(raidTime), (int(cost) / 5)))
         conn.commit()
+
+        currentRaid = cursor.lastrowid
+        # foundItems is a dict that has the item name and the number of times i found it as key:value pair
+        for item in foundItems:
+            cursor.execute("SELECT itemID FROM items WHERE name = ?", (item,))
+            result = cursor.fetchone()
+
+            if result:
+                itemID = result[0]
+
+            quantity = foundItems[item]
+            cursor.execute("INSERT INTO foundItems (raidID, itemID, quantity) VALUES (?, ?, ?)", (currentRaid, itemID, quantity))
+            conn.commit()
 
 # update the prices inside the DB (API)
 def updatePrices(mode):
@@ -202,11 +218,13 @@ def updatePrices(mode):
     if mode != 1:
         if getPassedTime() == 0:
             return
-    else:
-        # call api 
-        items = api.getItemData()
+        
+    # call api 
+    items = api.getItemData()
 
-        # cycle trough the item list
+    # cycle trough the item list
+    with sqlite3.connect(dbNAME) as conn:
+        cursor = conn.cursor()
         for name in trackedITEMS:
             item = items[name]
 
@@ -230,25 +248,27 @@ def getStats():
     # find out how many raids are entried
     stats["raidCounter"] = tupleToInt("SELECT COUNT(raidID) AS count FROM raids")
 
-    # get all items found + quantity inside a 2d array
-    cursor.execute("SELECT items.name AS itemName, foundItems.quantity AS quantity FROM foundItems INNER JOIN items ON items.itemID = foundItems.itemID WHERE foundItems.quantity != 0")
+    with sqlite3.connect(dbNAME) as conn:
+        cursor = conn.cursor()
+        # get all items found + quantity inside a 2d array
+        cursor.execute("SELECT items.name AS itemName, foundItems.quantity AS quantity FROM foundItems INNER JOIN items ON items.itemID = foundItems.itemID WHERE foundItems.quantity != 0")
 
-    allItems = cursor.fetchall()
-    stats["moneyEarned"] = getMoneyEarned(allItems) + getFixedProfit()
+        allItems = cursor.fetchall()
+        stats["moneyEarned"] = getMoneyEarned(allItems) + getFixedProfit()
 
-    items = {}
+        items = {}
 
-    for name, quantity in allItems:
-        if name in items:
-            items[name] += quantity
-        else:
-            items[name] = quantity
-    
-    stats["itemsFound"] = items
+        for name, quantity in allItems:
+            if name in items:
+                items[name] += quantity
+            else:
+                items[name] = quantity
+        
+        stats["itemsFound"] = items
 
-    cursor.execute("SELECT SUM(cost) FROM raids")
-    result_spent = cursor.fetchone()
-    stats["moneySpent"] = result_spent[0] if result_spent and result_spent[0] is not None else 0
+        cursor.execute("SELECT SUM(cost) FROM raids")
+        result_spent = cursor.fetchone()
+        stats["moneySpent"] = result_spent[0] if result_spent and result_spent[0] is not None else 0
 
     # profit calculation
     stats["revenue"] = stats["moneyEarned"] - stats["moneySpent"]

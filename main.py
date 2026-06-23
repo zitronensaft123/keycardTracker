@@ -190,17 +190,12 @@ def main():
         while(True):
             printDashboard()
             printPrompt()
-            db.conn.commit
     except KeyboardInterrupt:
         console.clear()
 
         console.print("User Interrupt detected, exiting...")
 
-        try:
-            db.conn.close()
-        except:
-            pass
-
         import sys
         sys.exit(0)
-main()
+    
+#main()
