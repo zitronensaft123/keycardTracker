@@ -1,6 +1,13 @@
 import requests
 import datetime
 from datetime import timedelta
+import streamlit as st
+import ssl
+import json
+
+#=============
+# tarkov.dev
+#=============
 
 # call tarkov.dev for item info
 def getItemData():
@@ -42,4 +49,8 @@ def getItemData():
     return items_by_name
 
 
+#===================
+# tarkovtracker.org
+# ==================
 
+# ssl certificate errors, not even ai can fix it, will hardcode tarkovtracker stats for now maybe gonna try another time

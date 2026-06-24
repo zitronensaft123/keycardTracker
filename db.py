@@ -173,6 +173,7 @@ def addNewRaid(raidTime, foundItems, cost):
 # update the prices inside the DB (API)
 def updatePrices(mode):
 
+    # if 1 is passed, timer will be skipped
     if mode != 1:
         if getPassedTime() == 0:
             return
@@ -189,6 +190,8 @@ def updatePrices(mode):
             # insert into db
             cursor.execute("INSERT INTO items (itemID, name, price) VALUES (?, ?, ?) ON CONFLICT(itemID) DO UPDATE SET price = excluded.price, name = excluded.name", (item["id"], item["name"], api_getHighestPrice(item)))
             conn.commit()
+    # will return 0 if no error (will crash otherwise anyways lol)
+    return items
 
 def df_getItems():
        with sqlite3.connect(dbNAME) as conn:
@@ -196,7 +199,7 @@ def df_getItems():
             SELECT 
                 foundItems.raidID AS raidID,
                 items.name AS itemName, 
-                items.price AS cost, 
+                items.price AS price, 
                 foundItems.quantity AS quantity 
             FROM foundItems 
             INNER JOIN items ON items.itemID = foundItems.itemID 
