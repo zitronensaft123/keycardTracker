@@ -188,7 +188,7 @@ def main():
     try:
         console.clear()
         while(True):
-            printDashboard()
+            #printDashboard()
             printPrompt()
     except KeyboardInterrupt:
         console.clear()

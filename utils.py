@@ -9,7 +9,7 @@ import db
 def df_sumFoundItems():
     df = db.df_getItems()
 
-    return df.groupby("itemName", as_index=False)["quantity"].sum()
+    return df.groupby(["itemName", "price"], as_index=False)["quantity"].sum()
 
 print(df_sumFoundItems())
 
@@ -79,10 +79,10 @@ def getStats():
     }
 
     stats["keycard"]["moneySpent"] = df_raids["cost"].sum()
-    stats["keycard"]["moneyEarned"] = (df_foundItems["cost"] * df_foundItems["quantity"]).sum()
+    stats["keycard"]["moneyEarned"] = (df_foundItems["price"] * df_foundItems["quantity"]).sum()
     stats["keycard"]["revenue"] = stats["keycard"]["moneyEarned"] - stats["keycard"]["moneySpent"]
 
-    stats["keycard"]["totalRaids"] = df_raids.len()
+    stats["keycard"]["totalRaids"] = len(df_raids)
 
     df_items["totalValue"] = df_items["price"] * df_items["quantity"]
 
@@ -95,5 +95,4 @@ def getStats():
     stats["overall"]["maxMoney"] = df_netWorth["money"].max()
     stats["overall"]["minMoney"] = df_netWorth["money"].min()
 
-
-
+    return stats
