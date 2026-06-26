@@ -190,6 +190,7 @@ def updatePrices(mode):
             # insert into db
             cursor.execute("INSERT INTO items (itemID, name, price) VALUES (?, ?, ?) ON CONFLICT(itemID) DO UPDATE SET price = excluded.price, name = excluded.name", (item["id"], item["name"], api_getHighestPrice(item)))
             conn.commit()
+            
     # will return 0 if no error (will crash otherwise anyways lol)
     return items
 
@@ -214,5 +215,13 @@ def df_getRaids():
     
 def df_getNetWorth():
     with sqlite3.connect(dbNAME) as conn:
-        query = "SELECT money, date from netWorth"
+        query = "SELECT money, date, entryID from netWorth"
+        df = pd.read_sql_query(query, conn)
+        return df.reset_index(drop=True)
+
+def getItemsTable():
+    with sqlite3.connect(dbNAME) as conn:
+        query = "SELECT name, itemID, price from items"
         return pd.read_sql_query(query, conn)
+    
+initDB()

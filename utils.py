@@ -24,44 +24,48 @@ removeTopBar = """<style>
                 </style>"""
 
 # dict for the tarkovTracker stats
-tarkovTrackerStats = {
-    "account": {
-        "name": "zitrone_3",
-        "level": "38",
-        "faction": "BEAR",
-        "mode": "PVE",
-    },
-    "quests": {
-        "kappa": "126",
-        "lightkeeper": "84",
-        "overall": "148" 
-    },
-    "traders": {
-        "prapor": "3",
-        "therapist": "4",
-        "fence": "1",
-        "skier": "4",
-        "peacekeeper": "4",
-        "mechanic": "3",
-        "ragman": "3",
-        "jaeger": "3",
-        "lightkeeper": "3",
-        "btr": "1"
+def getTarkovTrackerStats():
+    tarkovTrackerStats = {
+        "account": {
+            "name": "zitrone_3",
+            "level": "40",
+            "faction": "BEAR",
+            "mode": "PVE",
+        },
+        "quests": {
+            "kappa": "135",
+            "lightkeeper": "93",
+            "overall": "160" 
+        },
+        "traders": {
+            "prapor": "3",
+            "therapist": "4",
+            "fence": "1",
+            "skier": "4",
+            "peacekeeper": "4",
+            "mechanic": "3",
+            "ragman": "3",
+            "jaeger": "3",
+            "lightkeeper": "3",
+            "btr": "1"
+        }
     }
-}
+
+    return tarkovTrackerStats
 
 
 # ===========
 # Calculations
 #============
 
-df_items = db.df_getItems()
-df_raids = db.df_getRaids()
-df_netWorth = db.df_getNetWorth()
-df_foundItems = df_sumFoundItems()
+
 
 def getStats():
 
+    df_items = db.df_getItems()
+    df_raids = db.df_getRaids()
+    df_netWorth = db.df_getNetWorth()
+    df_foundItems = df_sumFoundItems()
     stats = {
         "keycard": {
             "moneySpent": 0,
@@ -74,25 +78,39 @@ def getStats():
         "overall": {
             "currentMoney": 0,
             "maxMoney": 0,
-            "minMoney": 0
+            "minMoney": 0,
+            "previousMoney": 0
         }
     }
 
-    stats["keycard"]["moneySpent"] = df_raids["cost"].sum()
-    stats["keycard"]["moneyEarned"] = (df_foundItems["price"] * df_foundItems["quantity"]).sum()
+    if not df_raids.empty:
+        stats["keycard"]["moneySpent"] = int(df_raids["cost"].sum())
+        stats["keycard"]["totalRaids"] = len(df_raids)
+
+    if not df_foundItems.empty:
+        stats["keycard"]["moneyEarned"] = int((df_foundItems["price"] * df_foundItems["quantity"]).sum())
+    
     stats["keycard"]["revenue"] = stats["keycard"]["moneyEarned"] - stats["keycard"]["moneySpent"]
 
-    stats["keycard"]["totalRaids"] = len(df_raids)
+    if not df_items.empty:
+        df_items["totalValue"] = df_items["price"] * df_items["quantity"]
+        earnings = df_items.groupby("raidID")["totalValue"].sum()
+        if not earnings.empty:
+            stats["keycard"]["bestRaid"] = int(earnings.max())
+            stats["keycard"]["worstRaid"] = int(earnings.min())
 
-    df_items["totalValue"] = df_items["price"] * df_items["quantity"]
-
-    earnings = df_items.groupby("raidID")["totalValue"].sum()
-
-    stats["keycard"]["bestRaid"] = earnings[earnings.idxmax()]
-    stats["keycard"]["worstRaid"] = earnings[earnings.idxmin()]
-
-    stats["overall"]["currentMoney"] = df_netWorth["money"].iloc[-1]
-    stats["overall"]["maxMoney"] = df_netWorth["money"].max()
-    stats["overall"]["minMoney"] = df_netWorth["money"].min()
+    if not df_netWorth.empty:
+        stats["overall"]["currentMoney"] = int(df_netWorth["money"].iloc[-1])
+        if len(df_netWorth) > 1:
+            stats["overall"]["previousMoney"] = int(df_netWorth["money"].iloc[-2])
+        stats["overall"]["maxMoney"] = int(df_netWorth["money"].max())
+        stats["overall"]["minMoney"] = int(df_netWorth["money"].min())
 
     return stats
+
+def formatNumber(number, mode):
+    # either add RUB or not
+    if mode == 1:
+        return f"{number:,} ₽".replace(",", ".")
+    else:
+        return f"{number:,}".replace(",", ".")

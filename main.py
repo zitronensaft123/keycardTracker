@@ -49,21 +49,6 @@ def setGoalValue(goal):
     with open("goal.txt", "w") as f:
         f.write(goal)
 
-def createProgressBar(current, goal):
-    progress = Progress(
-        TextColumn(formatNumber(db.getNetWorth())),
-        BarColumn(bar_width=70, complete_style="green", finished_style="bold green"),
-        TextColumn(formatNumber(getGoalValue()))
-    )
-
-    taskID = progress.add_task("tracking", total=goal)
-
-    progress.update(taskID, completed=current)
-
-    return progress
-
-def formatNumber(number):
-    return f"{number:,}".replace(",", ".")
 
 #create new Panel
 def createPanel(ratio):

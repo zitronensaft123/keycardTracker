@@ -1,10 +1,12 @@
 import streamlit as st
-import matplotlib
+import matplotlib.pyplot as pyplot
 import pandas as pd
 
 import api
 import utils
 import db
+
+db.initDB()
 
 st.set_page_config(
     page_title="EFT KeycardTracker",
@@ -18,24 +20,103 @@ st.markdown(utils.removeTopBar, unsafe_allow_html=True)
 
 statDict = utils.getStats()
 
+df_items = db.df_getItems()
+df_raids = db.df_getRaids()
+df_netWorth = db.df_getNetWorth()
+df_foundItems = utils.df_sumFoundItems()
+
 st.title("EFT KeycardTracker")
 
-overall, keycard, addRaid, devOptions = st.tabs(["Overall","Statistics", "Add Raid", "Dev Settings"], width=600)
+overall, keycard, addRaid, devOptions = st.tabs(["Overall","Keycard", "Add Raid", "Dev Settings"], width=1400)
 
 with overall:
-    col1, col2 = st.columns(2)
 
-    with col1:
-        st.write(statDict["overall"]["currentMoney"])
+    st.write("")
+
+    tcol1, tcol2, tcol3, tcol4, tcol5 = st.columns([1,1,1, 1, 1], gap="medium")
+
+    accountStats = utils.getTarkovTrackerStats()
+
+    with tcol1:
+        st.metric("Account Name:", accountStats["account"]["name"])
+    with tcol2:
+        st.metric("Account Level:", accountStats["account"]["level"])
+    with tcol3:
+        st.metric("Faction:", accountStats["account"]["faction"])
+    with tcol4:
+        st.metric("Gamemode:", accountStats["account"]["mode"])
+    st.write("-------------------------")
+
+    st.write("")
+
+    mcol1, mcol2, mcol3 = st.columns([2, 3, 4], gap="medium")
+
+    with mcol1:
+        new_balance = st.text_input("Update Balance")
+
+        if new_balance:
+            try:
+                db.addNetWorthEntry(int(new_balance))
+                st.cache_data.clear() 
+            except ValueError:
+                st.error("Please enter a valid integer")
+        
+        statDict = utils.getStats()
+
+        st.metric(
+            "Current RUB", 
+            utils.formatNumber(statDict["overall"]["currentMoney"], 1), 
+            (utils.formatNumber(statDict["overall"]["currentMoney"] - statDict["overall"]["previousMoney"], 1))
+        )
+        st.metric("Highest ever recorded:", utils.formatNumber(statDict["overall"]["maxMoney"], 1))
+        st.metric("Lowest ever recorded:", utils.formatNumber(statDict["overall"]["minMoney"], 1))
+
+    with mcol2:
+        df_netWorth = db.df_getNetWorth()
+        st.line_chart(df_netWorth, x="entryID", y="money", x_label="Balance", y_label="Entry")
+    with mcol3:
+        st.write("sigma")
+
+    st.write("-------------------------")
+    st.write("")
+
+    bcol1, bcol2, bcol3 = st.columns([1,1,1], gap="medium")
+
+    with bcol1:
+        st.metric("Kappa Progress:", accountStats["quests"]["kappa"] + " / 255")
+    with bcol2:
+        st.metric("Lightkeeper Progress:", accountStats["quests"]["lightkeeper"] + " / 100")
+    with bcol3:
+        st.metric("Overall Quest Progress:", accountStats["quests"]["overall"] + " / 469")
 
 with keycard:
-    st.write("print stats here")
-        
+    keycardStats = utils.getStats()
+    tcol1, tcol2, tcol3 = st.columns([1,1,1], gap="medium")
+
+    with tcol1:
+        st.metric("Profit from Black Keycards:", utils.formatNumber(keycardStats["keycard"]["revenue"], 1)) 
+    with tcol2:
+        st.metric("Money spent:", utils.formatNumber(keycardStats["keycard"]["moneySpent"], 1))
+    with tcol3:
+        st.metric("Raw Money earned", utils.formatNumber(keycardStats["keycard"]["moneyEarned"], 1))  
+
+    mcol1, mcol2, mcol3 = st.columns([1,1,1], gap="medium")
+
+    with mcol1:
+        st.metric("Total Blackcard Raids:", utils.formatNumber(keycardStats["keycard"]["totalRaids"], 0))
+    with mcol2:
+        st.metric("Best Raid (RUB):", utils.formatNumber(keycardStats["keycard"]["bestRaid"], 1))
+    with mcol3:
+        st.metric("worst Raid (RUB):", utils.formatNumber(keycardStats["keycard"]["totalRaids"], 1))
+
+
 with addRaid:
-    st.write("addRaid logic here")
+    items = db.getItemsTable()
+    st.selectbox(label="Items Found", options=items["name"])
 
 with devOptions:
     st.caption("this will bypass 10 Minute Delay! Use with Caution")
     if st.button("fetch Data"):
         st.write("asd")
+        db.updatePrices(1)
 
