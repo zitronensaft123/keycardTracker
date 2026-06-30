@@ -34,7 +34,7 @@ def getTarkovTrackerStats():
         },
         "quests": {
             "kappa": "135",
-            "lightkeeper": "93",
+            "lightkeeper": "100",
             "overall": "160" 
         },
         "traders": {

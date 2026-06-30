@@ -111,12 +111,19 @@ with keycard:
 
 
 with addRaid:
-    items = db.getItemsTable()
-    st.selectbox(label="Items Found", options=items["name"])
+    items = db.df_getItemsTable()
+    tcol1, tcol2 = st.columns([1,1], gap="medium")
+    with tcol1:
+        st.selectbox(label="Items Found", options=items["name"])
+    with tcol2:
+        st.write("")
+        st.write("")
+        st.caption(f"{db.getFetchedItems()} Items")
 
 with devOptions:
     st.caption("this will bypass 10 Minute Delay! Use with Caution")
     if st.button("fetch Data"):
-        st.write("asd")
         db.updatePrices(1)
-
+        st.cache_data.clear()
+        st.rerun()
+        st.write(f"Fetched {db.getFetchedItems()} Items")
