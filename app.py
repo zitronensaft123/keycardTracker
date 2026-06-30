@@ -18,6 +18,9 @@ st.set_page_config(
 # remove random ass whitespace at top
 st.markdown(utils.removeTopBar, unsafe_allow_html=True)
 
+def newline():
+    st.write("")
+
 statDict = utils.getStats()
 
 df_items = db.df_getItems()
@@ -31,7 +34,7 @@ overall, keycard, addRaid, devOptions = st.tabs(["Overall","Keycard", "Add Raid"
 
 with overall:
 
-    st.write("")
+    newline()
 
     tcol1, tcol2, tcol3, tcol4, tcol5 = st.columns([1,1,1, 1, 1], gap="medium")
 
@@ -112,13 +115,29 @@ with keycard:
 
 with addRaid:
     items = db.df_getItemsTable()
-    tcol1, tcol2 = st.columns([1,1], gap="medium")
+
+    foundItems = {}
+
+    
+    selection = st.selectbox(label=f" Select an Item you found ({db.getFetchedItems()})", options=items["name"])
+    newline()
+    if "foundItems" not in st.session_state:
+        st.session_state.foundItems = {}
+
+    tcol1, tcol2, spacer = st.columns([1,1, 3], gap="medium")
+
     with tcol1:
-        st.selectbox(label="Items Found", options=items["name"])
+        if st.button(f"+  Add {selection}"):
+            if selection in st.session_state.foundItems:                
+                st.session_state.foundItems[selection] += 1
+            else:
+                st.session_state.foundItems[selection] = 1
+
     with tcol2:
-        st.write("")
-        st.write("")
-        st.caption(f"{db.getFetchedItems()} Items")
+        if st.button("X Clear Selection"):
+            st.session_state.foundItems.clear()
+    
+    st.write(st.session_state.foundItems)
 
 with devOptions:
     st.caption("this will bypass 10 Minute Delay! Use with Caution")
@@ -127,3 +146,4 @@ with devOptions:
         st.cache_data.clear()
         st.rerun()
         st.write(f"Fetched {db.getFetchedItems()} Items")
+
