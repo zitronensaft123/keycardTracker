@@ -2,15 +2,15 @@ import streamlit as st
 import matplotlib.pyplot as pyplot
 import pandas as pd
 
-import api
-import utils
-import db
+import src.api as api
+import src.utils as utils
+import src.db as db
 
 db.initDB()
 
 st.set_page_config(
     page_title="EFT KeycardTracker",
-    page_icon="marin.jpg",
+    page_icon="assets/marin.jpg",
     layout="wide",
     menu_items=None
 )
@@ -97,7 +97,7 @@ with overall:
     with bcol3:
         st.metric("Overall Quest Progress:", accountStats["quests"]["overall"] + " / 469")
 
-    st.caption(f"!! This currently only shows the statistics of my EFT PVE Account. This is not finished !! See the Source code at: {st.link_button(label="Github", url="https://github.com/zitronensaft123/keycardTracker")}")
+    st.caption(f"!! This currently only shows the statistics of my EFT PVE Account. This is not finished !! See the Source code at: [Github](https://github.com/zitronensaft123/keycardTracker)")
 with keycard:
     keycardStats = utils.getStats()
     tcol1, tcol2, tcol3 = st.columns([1,1,1], gap="medium")

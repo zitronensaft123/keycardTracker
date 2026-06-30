@@ -1,10 +1,10 @@
 import sqlite3
-import api
+import src.api as api
 from datetime import datetime
 from datetime import timedelta
 import pandas as pd
 
-dbNAME = "tracker.db"
+dbNAME = "data/tracker.db"
 price = 900000
 
 # list of tracked items
