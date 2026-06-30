@@ -27,6 +27,48 @@ def htmlNewLine(x):
     for i in range(x):
         st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
 
+@st.fragment
+def itemSelector():
+    tcol1, tcol2, tcol3, tcol4, spacer = st.columns([3,1,1,1,3], gap="small")
+
+    with tcol1:
+        selection = st.selectbox(label=f" Select an Item you found ({db.getFetchedItems()}) (Fixed Spawns are added automatically)", options=items["name"])
+        newline(1)
+    with tcol2:
+        htmlNewLine(1)
+        if st.button("Add default Loot", key="default"):
+            st.session_state.foundItems["Physical Bitcoin"] = 1
+            st.session_state.foundItems["Roler Submariner gold wrist watch"] = 1
+    with tcol3:
+        htmlNewLine(1)
+        if st.button("Add 1 Bitcoin ", key="btc"):
+            if "Physical Bitcoin" in st.session_state.foundItems:                
+                st.session_state.foundItems["Physical Bitcoin"] += 1
+            else:
+                st.session_state.foundItems["Physical Bitcoin"] = 1
+    with tcol4:
+        htmlNewLine(1)
+        if st.button("Add 1 Roler", key="roler"):
+            if "Roler Submariner gold wrist watch" in st.session_state.foundItems:                
+                st.session_state.foundItems["Roler Submariner gold wrist watch"] += 1
+            else:
+                st.session_state.foundItems["Roler Submariner gold wrist watch"] = 1
+        
+    mcol1, mcol2, spacer = st.columns([1.3 ,1, 4], gap="small")
+
+    with mcol1:
+        if st.button(f"+ Add {selection}"):
+            if selection in st.session_state.foundItems:                
+                st.session_state.foundItems[selection] += 1
+            else:
+                st.session_state.foundItems[selection] = 1
+
+    with mcol2:
+        if st.button("X Clear Selection"):
+            st.session_state.foundItems.clear()
+    
+    st.write(st.session_state.foundItems)
+
 statDict = utils.getStats()
 
 df_items = db.df_getItems()
@@ -101,6 +143,7 @@ with overall:
     st.caption(f"!! This currently only shows the statistics of my EFT PVE Account. This is not finished !! See the Source code at: [Github](https://github.com/zitronensaft123/keycardTracker)")
 with keycard:
     keycardStats = utils.getStats()
+    st.header("Money:")
     tcol1, tcol2, tcol3 = st.columns([1,1,1], gap="medium")
 
     with tcol1:
@@ -110,6 +153,8 @@ with keycard:
     with tcol3:
         st.metric("Raw Money earned", utils.formatNumber(keycardStats["keycard"]["moneyEarned"], 1))  
 
+    st.write("-------------------------")
+    st.header("Raids:") 
     mcol1, mcol2, mcol3 = st.columns([1,1,1], gap="medium")
 
     with mcol1:
@@ -127,66 +172,30 @@ with addRaid:
     if "foundItems" not in st.session_state:
         st.session_state.foundItems = {}
 
-    tcol1, tcol2, tcol3, tcol4, spacer = st.columns([3,1,1,1,3], gap="small")
+    itemSelector()
 
-    with tcol1:
-        selection = st.selectbox(label=f" Select an Item you found ({db.getFetchedItems()}) (Fixed Spawns are added automatically)", options=items["name"])
-        newline(1)
-    with tcol2:
-        htmlNewLine(1)
-        if st.button("Add default Loot", key="default"):
-            st.session_state.foundItems["Physical Bitcoin"] = 1
-            st.session_state.foundItems["Roler Submariner gold wrist watch"] = 1
-    with tcol3:
-        htmlNewLine(1)
-        if st.button("Add 1 Bitcoin ", key="btc"):
-            if "Physical Bitcoin" in st.session_state.foundItems:                
-                st.session_state.foundItems["Physical Bitcoin"] += 1
-            else:
-                st.session_state.foundItems["Physical Bitcoin"] = 1
-    with tcol4:
-        htmlNewLine(1)
-        if st.button("Add 1 Roler", key="roler"):
-            if "Roler Submariner gold wrist watch" in st.session_state.foundItems:                
-                st.session_state.foundItems["Roler Submariner gold wrist watch"] += 1
-            else:
-                st.session_state.foundItems["Roler Submariner gold wrist watch"] = 1
-        
-    mcol1, mcol2, spacer = st.columns([1.3 ,1, 4], gap="small")
-
-    with mcol1:
-        if st.button(f"+ Add {selection}"):
-            if selection in st.session_state.foundItems:                
-                st.session_state.foundItems[selection] += 1
-            else:
-                st.session_state.foundItems[selection] = 1
-
-    with mcol2:
-        if st.button("X Clear Selection"):
-            st.session_state.foundItems.clear()
-    
-    st.write(st.session_state.foundItems)
-
-    bcol1, bcol2, spacer = st.columns([1,1,4], gap="small")
+    bcol1, bcol2, spacer = st.columns([2,3,4], gap="small")
 
     with bcol1:
         cost = st.text_input("Blackcard Cost (Default: 4.500.000)")
     with bcol2:
-        time = st.text_input("Enter how long ur raid was (Seperated by a :)(Default: 15:00)")
+        raidTime = st.text_input("Enter how long ur raid was (Seperated by a : ) (Default: 15:00)")
+
+    entryCost = cost if cost else "4.500.000"
+    entryRaidTime = raidTime if raidTime else "15:00"
 
     if st.button("Add Raid Entry to Database", key="commit"):
-        if not cost:
-            db.addNewRaid(time, st.session_state.foundItems, "4500000")
-        elif not time:
-            try:
-                db.addNewRaid("15:00", st.session_state.foundItems, cost)
-                st.cache_data.clear() 
-            except ValueError:
-                st.error("Please enter a valid integer")
-        elif not time and not cost:
-            db.addNewRaid("15:00", st.session_state.foundItems, "4500000")
-        else:
-            db.addNewRaid(time , st.session_state.foundItems, cost)
+        if ":" not in entryRaidTime:
+            st.Error("Please enter time in MM:SS format")
+        try:
+            db.addNewRaid(entryRaidTime, st.session_state.foundItems, entryCost)
+            st.write("Succesfully added Raid to DB!")
+            time.sleep(2)
+            st.session_state.foundItems.clear()
+            st.cache_data.clear()
+            st.rerun()
+        except ValueError:
+            st.error("Please enter a valid integer as cost")
         
 with devOptions:
     st.caption("this will bypass 10 Minute Delay! Use with Caution")
