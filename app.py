@@ -5,6 +5,7 @@ import pandas as pd
 import src.api as api
 import src.utils as utils
 import src.db as db
+import time
 
 db.initDB()
 
@@ -166,11 +167,33 @@ with addRaid:
     
     st.write(st.session_state.foundItems)
 
+    bcol1, bcol2, spacer = st.columns([1,1,4], gap="small")
+
+    with bcol1:
+        cost = st.text_input("Blackcard Cost (Default: 4.500.000)")
+    with bcol2:
+        time = st.text_input("Enter how long ur raid was (Seperated by a :)(Default: 15:00)")
+
+    if st.button("Add Raid Entry to Database", key="commit"):
+        if not cost:
+            db.addNewRaid(time, st.session_state.foundItems, "4500000")
+        elif not time:
+            try:
+                db.addNewRaid("15:00", st.session_state.foundItems, cost)
+                st.cache_data.clear() 
+            except ValueError:
+                st.error("Please enter a valid integer")
+        elif not time and not cost:
+            db.addNewRaid("15:00", st.session_state.foundItems, "4500000")
+        else:
+            db.addNewRaid(time , st.session_state.foundItems, cost)
+        
 with devOptions:
     st.caption("this will bypass 10 Minute Delay! Use with Caution")
     if st.button("fetch Data"):
         db.updatePrices(1)
+        st.write(f"Fetched {db.getFetchedItems()} Items")
+        time.sleep(2)
         st.cache_data.clear()
         st.rerun()
-        st.write(f"Fetched {db.getFetchedItems()} Items")
 

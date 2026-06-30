@@ -14,7 +14,7 @@ import click
 import art
 import time
 
-import db
+import src.db as db
 
 # -----------
 versionName = "V1.0 "
