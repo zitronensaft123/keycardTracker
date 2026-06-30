@@ -18,8 +18,13 @@ st.set_page_config(
 # remove random ass whitespace at top
 st.markdown(utils.removeTopBar, unsafe_allow_html=True)
 
-def newline():
-    st.write("")
+def newline(x):
+    for i in range(x):
+        st.write("")
+
+def htmlNewLine(x):
+    for i in range(x):
+        st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
 
 statDict = utils.getStats()
 
@@ -34,7 +39,7 @@ overall, keycard, addRaid, devOptions = st.tabs(["Overall","Keycard", "Add Raid"
 
 with overall:
 
-    newline()
+    newline(1)
 
     tcol1, tcol2, tcol3, tcol4, tcol5 = st.columns([1,1,1, 1, 1], gap="medium")
 
@@ -92,6 +97,7 @@ with overall:
     with bcol3:
         st.metric("Overall Quest Progress:", accountStats["quests"]["overall"] + " / 469")
 
+    st.caption(f"!! This currently only shows the statistics of my EFT PVE Account. This is not finished !! See the Source code at: {st.link_button(label="Github", url="https://github.com/zitronensaft123/keycardTracker")}")
 with keycard:
     keycardStats = utils.getStats()
     tcol1, tcol2, tcol3 = st.columns([1,1,1], gap="medium")
@@ -117,23 +123,44 @@ with addRaid:
     items = db.df_getItemsTable()
 
     foundItems = {}
-
-    
-    selection = st.selectbox(label=f" Select an Item you found ({db.getFetchedItems()})", options=items["name"])
-    newline()
     if "foundItems" not in st.session_state:
         st.session_state.foundItems = {}
 
-    tcol1, tcol2, spacer = st.columns([1,1, 3], gap="medium")
+    tcol1, tcol2, tcol3, tcol4, spacer = st.columns([3,1,1,1,3], gap="small")
 
     with tcol1:
-        if st.button(f"+  Add {selection}"):
+        selection = st.selectbox(label=f" Select an Item you found ({db.getFetchedItems()}) (Fixed Spawns are added automatically)", options=items["name"])
+        newline(1)
+    with tcol2:
+        htmlNewLine(1)
+        if st.button("Add default Loot", key="default"):
+            st.session_state.foundItems["Physical Bitcoin"] = 1
+            st.session_state.foundItems["Roler Submariner gold wrist watch"] = 1
+    with tcol3:
+        htmlNewLine(1)
+        if st.button("Add 1 Bitcoin ", key="btc"):
+            if "Physical Bitcoin" in st.session_state.foundItems:                
+                st.session_state.foundItems["Physical Bitcoin"] += 1
+            else:
+                st.session_state.foundItems["Physical Bitcoin"] = 1
+    with tcol4:
+        htmlNewLine(1)
+        if st.button("Add 1 Roler", key="roler"):
+            if "Roler Submariner gold wrist watch" in st.session_state.foundItems:                
+                st.session_state.foundItems["Roler Submariner gold wrist watch"] += 1
+            else:
+                st.session_state.foundItems["Roler Submariner gold wrist watch"] = 1
+        
+    mcol1, mcol2, spacer = st.columns([1.3 ,1, 4], gap="small")
+
+    with mcol1:
+        if st.button(f"+ Add {selection}"):
             if selection in st.session_state.foundItems:                
                 st.session_state.foundItems[selection] += 1
             else:
                 st.session_state.foundItems[selection] = 1
 
-    with tcol2:
+    with mcol2:
         if st.button("X Clear Selection"):
             st.session_state.foundItems.clear()
     

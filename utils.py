@@ -28,7 +28,7 @@ def getTarkovTrackerStats():
     tarkovTrackerStats = {
         "account": {
             "name": "zitrone_3",
-            "level": "40",
+            "level": "42",
             "faction": "BEAR",
             "mode": "PVE",
         },
