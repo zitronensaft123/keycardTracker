@@ -28,8 +28,47 @@ def htmlNewLine(x):
         st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
 
 @st.fragment
+def addRaidTab():
+
+    tcol1, tcol2 = st.columns([2 ,1], gap="medium", border=True)
+
+    with tcol1:
+
+        foundItems = {}
+        if "foundItems" not in st.session_state:
+            st.session_state.foundItems = {}
+
+        itemSelector()
+
+        bcol1, bcol2= st.columns([2,3], gap="small")
+
+        with bcol1:
+            cost = st.text_input("Blackcard Cost (Default: 4.500.000)")
+        with bcol2:
+            raidTime = st.text_input("Enter how long ur raid was (Seperated by a : ) (Default: 15:00)")
+
+        entryCost = cost if cost else "4.500.000"
+        entryRaidTime = raidTime if raidTime else "15:00"
+
+        if st.button("Add Raid Entry to Database", key="commit"):
+            if ":" not in entryRaidTime:
+                st.Error("Please enter time in MM:SS format")
+            try:
+                db.addNewRaid(entryRaidTime, st.session_state.foundItems, entryCost)
+                st.write("Succesfully added Raid to DB!")
+                time.sleep(2)
+                st.session_state.foundItems.clear()
+                st.cache_data.clear()
+                st.rerun()
+            except ValueError:
+                st.error("Please enter a valid integer as cost")
+    with tcol2:
+            st.write(st.session_state.foundItems)
+
 def itemSelector():
-    tcol1, tcol2, tcol3, tcol4, spacer = st.columns([3,1,1,1,3], gap="small")
+    items = db.df_getItemsTable()
+    
+    tcol1, tcol2, tcol3, tcol4 = st.columns([3,1,1,1,], gap="small")
 
     with tcol1:
         selection = st.selectbox(label=f" Select an Item you found ({db.getFetchedItems()}) (Fixed Spawns are added automatically)", options=items["name"])
@@ -54,7 +93,7 @@ def itemSelector():
             else:
                 st.session_state.foundItems["Roler Submariner gold wrist watch"] = 1
         
-    mcol1, mcol2, spacer = st.columns([1.3 ,1, 4], gap="small")
+    mcol1, mcol2 = st.columns([1.3 ,1], gap="small")
 
     with mcol1:
         if st.button(f"+ Add {selection}"):
@@ -67,7 +106,6 @@ def itemSelector():
         if st.button("X Clear Selection"):
             st.session_state.foundItems.clear()
     
-    st.write(st.session_state.foundItems)
 
 statDict = utils.getStats()
 
@@ -166,36 +204,7 @@ with keycard:
 
 
 with addRaid:
-    items = db.df_getItemsTable()
-
-    foundItems = {}
-    if "foundItems" not in st.session_state:
-        st.session_state.foundItems = {}
-
-    itemSelector()
-
-    bcol1, bcol2, spacer = st.columns([2,3,4], gap="small")
-
-    with bcol1:
-        cost = st.text_input("Blackcard Cost (Default: 4.500.000)")
-    with bcol2:
-        raidTime = st.text_input("Enter how long ur raid was (Seperated by a : ) (Default: 15:00)")
-
-    entryCost = cost if cost else "4.500.000"
-    entryRaidTime = raidTime if raidTime else "15:00"
-
-    if st.button("Add Raid Entry to Database", key="commit"):
-        if ":" not in entryRaidTime:
-            st.Error("Please enter time in MM:SS format")
-        try:
-            db.addNewRaid(entryRaidTime, st.session_state.foundItems, entryCost)
-            st.write("Succesfully added Raid to DB!")
-            time.sleep(2)
-            st.session_state.foundItems.clear()
-            st.cache_data.clear()
-            st.rerun()
-        except ValueError:
-            st.error("Please enter a valid integer as cost")
+    addRaidTab()
         
 with devOptions:
     st.caption("this will bypass 10 Minute Delay! Use with Caution")
