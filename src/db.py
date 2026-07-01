@@ -1,10 +1,10 @@
 import sqlite3
-import src.api as api
+import api as api
 from datetime import datetime
 from datetime import timedelta
 import pandas as pd
 
-dbNAME = "data/tracker.db"
+dbNAME = "../data/tracker.db"
 price = 900000
 
 # list of tracked items
@@ -43,7 +43,10 @@ def initDB():
                        raidID INTEGER PRIMARY KEY AUTOINCREMENT,
                        date TEXT NOT NULL,
                        seconds INTEGER NOT NULL,
-                       cost INTEGER NOT NULL
+                       cost INTEGER NOT NULL,
+                       userID INTEGER,
+
+                       FOREIGN KEY(userID) REFERENCES user(userID)
                        )
                        ''')
         cursor.execute('''
@@ -71,8 +74,18 @@ def initDB():
                         CREATE TABLE IF NOT EXISTS netWorth (
                         entryID INTEGER PRIMARY KEY AUTOINCREMENT,
                         money INTEGER NOT NULL,
-                        date TEXT NOT NULL
+                        date TEXT NOT NULL,
+                        userID INTEGER,
+                       
+                       FOREIGN KEY(userID) REFERENCES user(userID)
                         )
+                        ''')
+        cursor.execute('''
+                        CREATE TABLE IF NOT EXISTS user (
+                       userID INTEGER PRIMARY KEY AUTOINCREMENT,
+                       username TEXT,
+                       password TEXT
+                       )
                         ''')
         conn.commit()
     

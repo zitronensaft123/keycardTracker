@@ -2,9 +2,9 @@
 
 import matplotlib
 import pandas as pd
-
-import src.api as api
-import src.db as db
+import streamlit as st
+import api as api
+import db as db
 
 def df_sumFoundItems():
     df = db.df_getItems()
@@ -23,6 +23,36 @@ removeTopBar = """<style>
                 }
                 </style>"""
 
+def removePageBar():
+    st.markdown(
+        """
+        <style>
+            /* Completely hide the header bar at the top of the page */
+            header[data-testid="stHeader"] {
+                display: none !important;
+                visibility: hidden !important;
+            }
+            
+            /* Kill the multi-page link list inside the sidebar */
+            [data-testid="stSidebarNav"] {
+                display: none !important;
+                visibility: hidden !important;
+            }
+            
+            /* Deletes the sidebar toggle chevron button in the top left */
+            [data-testid="stSidebarCollapseButton"] {
+                display: none !important;
+                visibility: hidden !important;
+            }
+            
+            /* Optional: If you don't use the sidebar at all and want to completely eliminate it */
+            section[data-testid="stSidebar"] {
+                display: none !important;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
 # dict for the tarkovTracker stats
 def getTarkovTrackerStats():
     tarkovTrackerStats = {

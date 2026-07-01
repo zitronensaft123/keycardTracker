@@ -1,0 +1,14 @@
+[theme]
+
+headingFont = "monospace"
+textColor = "#886db5"
+primaryColor="#886db5"
+backgroundColor = "#18191a"
+secondaryBackgroundColor = "#262730"
+
+[client]
+toolbarMode = "minimal"
+showSidebarNavigation = false
+
+[ui]
+hideTopBar = true

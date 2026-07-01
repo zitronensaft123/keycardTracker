@@ -3,9 +3,9 @@ import matplotlib.pyplot as pyplot
 import pandas as pd
 import time
 
-import src.api as api
-import src.utils as utils
-import src.db as db
+import api as api
+import utils as utils
+import db as db
 
 def newline(x):
     for i in range(x):
