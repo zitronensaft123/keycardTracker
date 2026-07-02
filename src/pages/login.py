@@ -1,4 +1,0 @@
-import streamlit as st
-import streamlit_authenticator as sauth
-
-sauth.authenticator.login()

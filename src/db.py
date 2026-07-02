@@ -3,6 +3,7 @@ import api as api
 from datetime import datetime
 from datetime import timedelta
 import pandas as pd
+import bcrypt
 
 dbNAME = "../data/tracker.db"
 price = 900000
@@ -216,6 +217,38 @@ def updatePrices(mode):
     # will return 0 if no error (will crash otherwise anyways lol)
     return items
 
+# ============
+# User Managment
+# ============
+
+def addNewUser(username, password):
+    with sqlite3.connect(dbNAME) as conn:
+        cursor = conn.cursor()
+
+        cursor.execute("INSERT INTO user (username, password) VALUES (?, ?)", (username, password))
+        conn.commit()
+
+def createHash(password):
+    bytes = password.encode('utf-8')
+
+    salt = bcrypt.gensalt()
+    hash = bcrypt.hashpw(bytes, salt)
+
+    return hash.decode('utf-8')
+
+def checkPassword(username, password):
+    users = df_getUserTable()
+
+    enteredBytes = password.encode('utf-8')
+    storedBytes = users[username]["password"]
+
+    if bcrypt.checkpw(enteredBytes, storedBytes):
+        return True
+    else:
+        return False 
+# ============= 
+# get Dataframes
+# =============
 def df_getItems():
        with sqlite3.connect(dbNAME) as conn:
         query = """
@@ -245,5 +278,9 @@ def df_getItemsTable():
     with sqlite3.connect(dbNAME) as conn:
         query = "SELECT name, itemID, price from items"
         return pd.read_sql_query(query, conn)
-    
-initDB()
+
+def df_getUserTable():
+    with sqlite3.connect(dbNAME) as conn:
+        query = "SELECT userID, username, password from user"
+        return pd.read_sql_query(query, conn)
+
