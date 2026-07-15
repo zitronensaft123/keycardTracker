@@ -62,3 +62,6 @@ if st.session_state.currentPage == "mainPage":
 
 if st.session_state.currentPage == "loginPage":
     login.showLogin()
+
+if st.session_state.currentPage == "registerPage":
+    login.showRegister()

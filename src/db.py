@@ -237,6 +237,9 @@ def createHash(password):
     return hash.decode('utf-8')
 
 def checkPassword(username, password):
+
+    if not username or not password:
+        return False
     users = df_getUserTable()
 
     enteredBytes = password.encode('utf-8')
@@ -249,6 +252,7 @@ def checkPassword(username, password):
 # ============= 
 # get Dataframes
 # =============
+
 def df_getItems():
        with sqlite3.connect(dbNAME) as conn:
         query = """
