@@ -48,9 +48,40 @@ def getItemData():
 
     return items_by_name
 
+def getNeededItems():
+    query = """
+        query {
+            items {
+                name
+                shortName
+                usedInTasks {
+                task {
+                    name
+                }
+                count
+                foundInRaid
+                }
+                usedInHideout {
+                station {
+                    name
+                }
+                level
+                count
+                }
+            }
+        }
+    """
 
+    headers = {"Content-Type": "application/json"}
+    response = requests.post('https://api.tarkov.dev/graphql', headers=headers, json={'query': query})
+    if response.status_code == 200:
+        items = response.json()["data"]["items"]
+    else:
+        raise Exception("Query failed to run by returning code of {}. {}".format(response.status_code, query))
+
+    return items
 #===================
 # tarkovtracker.org
 # ==================
 
-# ssl certificate errors, not even ai can fix it, will hardcode tarkovtracker stats for now maybe gonna try another time
+# ssl certificate errors, not even ai can fix it, will hardcode tarkovtracker stats for now maybe gonna try another time:

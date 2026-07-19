@@ -40,11 +40,12 @@ def showMain():
         st.title("EFT KeycardTracker")
 
     with hcol2:
-        if st.button("Login", key="loginButton"):
-            st.session_state.currentPage = "loginPage"
-            st.rerun()
+        st.write("Login WiP")
+        #if st.button("Login", key="loginButton"):
+            #st.session_state.currentPage = "loginPage"
+            #st.rerun()
 
-    overall, keycard, addRaid, devOptions = st.tabs(["Overall","Keycard", "Add Raid", "Dev Settings"], width=1400)
+    overall, keycard, addRaid, seasonal, devOptions = st.tabs(["Overall","Keycard", "Add Raid", "Seasonal", "Dev Settings"], width=1400)
 
     with overall:
         ui.overallTab()
@@ -53,9 +54,11 @@ def showMain():
         ui.keycardTab()
     with addRaid:
         ui.addRaidTab()
-            
+    with seasonal:
+        st.write("test")
     with devOptions:
         ui.devOptionsTab()
+
 
 if st.session_state.currentPage == "mainPage":
     showMain()
