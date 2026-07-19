@@ -79,7 +79,34 @@ def getNeededItems():
     else:
         raise Exception("Query failed to run by returning code of {}. {}".format(response.status_code, query))
 
-    return items
+    neededItems = {
+        "name": "",
+        "hideout": 0,
+        "fir_hideout": 0,
+        "task": 0,
+        "fir_task": 0,
+        "total": 0
+    }
+
+    for item in items:
+        hideout = sum(t["count"] for t in item["usedInHideout"] if not t["foundInRaid"])
+        hideoutFiR = sum(t["count"] for t in item["usedInHideout"] if t["foundInRaid"])
+        task = sum(t["count"] for t in item["usedInTask"] if not t["foundInRaid"])
+        taskFiR = sum(t["count"] for t in item["usedInTask"] if not t["foundInRaid"])
+
+        total = hideout + hideoutFiR + task + taskFiR
+
+        if total > 0:
+            neededItems["name"] = item["shortName"]
+            neededItems["hideout"] = hideout
+            neededItems["fir_hideout"] = hideoutFiR
+            neededItems["task"] = task
+            neededItems["fir_task"] = taskFiR
+            neededItems["total"] = total
+
+        print(neededItems)
+        return neededItems
+
 #===================
 # tarkovtracker.org
 # ==================

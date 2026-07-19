@@ -188,3 +188,6 @@ def keycardTab():
     with mcol3:
         st.metric("worst Raid (RUB):", utils.formatNumber(keycardStats["keycard"]["totalRaids"], 1))
 
+def seasonalTab():
+    if st.button("Fetch Needed Items", key="test"):
+        api.getNeededItems()

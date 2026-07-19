@@ -55,7 +55,7 @@ def showMain():
     with addRaid:
         ui.addRaidTab()
     with seasonal:
-        st.write("test")
+        ui.seasonalTab()
     with devOptions:
         ui.devOptionsTab()
 
